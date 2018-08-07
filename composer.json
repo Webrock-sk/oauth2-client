@@ -1,0 +1,21 @@
+{
+	"name": "webrock-sk/panzer-auth-client",
+	"version": "0.0.1",
+	"description": "",
+	"type": "library",
+	"authors": [
+		{
+			"name": "Dávid Smatana",
+			"email": "david.smatana@webrock.sk"
+		}
+	],
+	"require": {
+		"league/oauth2-client": "^2.3",
+		"lcobucci/jwt": "^3.2"
+	},
+	"autoload": {
+		"psr-4": {
+			"WebrockSk\\PanzerAuthClient\\": "src/"
+		}
+	}
+}
