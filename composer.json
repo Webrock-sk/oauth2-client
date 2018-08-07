@@ -1,5 +1,5 @@
 {
-	"name": "webrock-sk/panzer-auth-client",
+	"name": "webrock-sk/oauth2-client",
 	"version": "0.0.1",
 	"description": "",
 	"type": "library",
@@ -15,7 +15,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"WebrockSk\\PanzerAuthClient\\": "src/"
+			"WebrockSk\\Oauth2Client\\": "src/"
 		}
 	}
 }

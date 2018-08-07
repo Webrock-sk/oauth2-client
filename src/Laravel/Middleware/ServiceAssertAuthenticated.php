@@ -1,7 +1,7 @@
 <?php
-namespace WebrockSk\PanzerAuthClient\Laravel\Middleware;
+namespace WebrockSk\Oauth2Client\Laravel\Middleware;
 
-use WebrockSk\PanzerAuthClient\Client;
+use WebrockSk\Oauth2Client\Client;
 
 use App;
 use Closure;

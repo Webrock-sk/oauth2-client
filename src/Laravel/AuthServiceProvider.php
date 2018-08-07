@@ -1,9 +1,9 @@
 <?php
-namespace WebrockSk\PanzerAuthClient\Laravel;
+namespace WebrockSk\Oauth2Client\Laravel;
 
 use Illuminate\Support\ServiceProvider;
 
-use WebrockSk\PanzerAuthClient\Client;
+use WebrockSk\Oauth2Client\Client;
 
 use EntityManager;
 

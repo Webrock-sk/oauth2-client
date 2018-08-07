@@ -1,4 +1,4 @@
 <?php
-namespace WebrockSk\PanzerAuthClient;
+namespace WebrockSk\Oauth2Client;
 
 interface ResourceOwnerInterface {}
