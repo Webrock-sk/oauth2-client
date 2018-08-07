@@ -101,11 +101,17 @@ class Token {
 	 */
 	public static function extractFromHeader() {
 
-		$headers = apache_request_headers();
+		if(function_exists('apache_request_headers')) {
 
-		if(!array_key_exists('Authorization', $headers))
-			return null;
+			$headers = apache_request_headers();
 
-		return preg_replace('/\s*Bearer\s*/', '', $headers['Authorization']);
+			if(!array_key_exists('Authorization', $headers))
+				return null;
+
+			return preg_replace('/\s*Bearer\s*/', '', $headers['Authorization']);
+		}
+		
+		if(isset($_SERVER['HTTP_AUTHORIZATION']))
+			return preg_replace('/\s*Bearer\s*/', '', $_SERVER['HTTP_AUTHORIZATION']);
 	}
 }
