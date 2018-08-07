@@ -9,7 +9,7 @@ use Exception;
 
 class Token {
 
-	const COOKIE_KEY = 'token';
+	const COOKIE_KEY = 'webrockOauth2clientToken';
 
 	/**
 	 * setAccessToken
