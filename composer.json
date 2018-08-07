@@ -1,7 +1,7 @@
 {
 	"name": "webrock-sk/oauth2-client",
-	"version": "0.0.1",
-	"description": "",
+	"description": "OAuth 2.0 Client Library",
+	"license": "MIT",
 	"type": "library",
 	"authors": [
 		{
@@ -10,6 +10,7 @@
 		}
 	],
 	"require": {
+		"php": "^5.6|^7.0",
 		"league/oauth2-client": "^2.3",
 		"lcobucci/jwt": "^3.2"
 	},
