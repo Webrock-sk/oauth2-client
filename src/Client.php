@@ -2,6 +2,9 @@
 namespace WebrockSk\Oauth2Client;
 
 use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Provider\GenericResourceOwner;
+
+use WebrockSk\Oauth2Client\AccessToken\Storage\StorageInterface;
 
 use Exception;
 
@@ -10,32 +13,11 @@ class Client {
 	static $instance;
 
 	/**
-	 * $server
-	 *
-	 * @var string
-	 */
-	private $server;
-
-	/**
-	 * $loginUrl
-	 *
-	 * @var string
-	 */
-	private $loginUrl = '/login';
-
-	/**
 	 * $config
 	 *
 	 * @var array
 	 */
 	private $config;
-
-	/**
-	 * $providerOptions
-	 *
-	 * @var array
-	 */
-	private $providerOptions;
 
 	/**
 	 * $provider
@@ -52,35 +34,49 @@ class Client {
 	private $accessToken;
 
 	/**
+	 * $tokenStorage
+	 *
+	 * @var StorageInterface
+	 */
+	private $tokenStorage;
+
+	/**
 	 * $user
 	 *
 	 * @var ResourceOwnerInterface
 	 */
-	private $user;
+	private $resourceOwner;
 
 	/**
-	 * Konstruktor
+	 * __construct
 	 *
+	 * @param mixed $config
 	 * @return void
 	 */
 	public function __construct($config = []) {
 
-		$this->server = $config['server'];
+		if(!isset($config['clientId']))
+			throw new Exception('Provide clientId');
 
-		$this->providerOptions = [
-			'clientId'                => $config['clientId'],
-			'clientSecret'            => $config['clientSecret'],
-			'redirectUri'             => $config['redirectUri'],
-			'urlAuthorize'            => $config['server'].'/oauth/authorize',
-			'urlAccessToken'          => $config['server'].'/api/oauth/token',
-			'urlResourceOwnerDetails' => $config['server'].'/api/oauth/resource',
-			'proxy'                   => @$config['proxyIp'] ?: null,
-			'verify'                  => false
+		if(!isset($config['redirectUri']))
+			throw new Exception('Provide redirectUri');
+
+		$this->config = [
+			'server'                      => $config['server'],
+			'providerConfig' => [
+				'clientId'                => $config['clientId'],
+				'clientSecret'            => $config['clientSecret'],
+				'redirectUri'             => $config['redirectUri'],
+				'proxy'                   => @$config['proxyIp'] ?: null,
+				'verify'                  => false
+			],
+			'auto_refresh_token' => isset($config['auto_refresh_token']) ? $config['auto_refresh_token'] : true
 		];
 
-		$this->provider = $this->createProvider();
-
-		$this->accessToken = Token::fromCookie() ?: Token::fromHeader();
+		if(isset($config['token_storage']))
+			$this->setTokenStorage($config['token_storage']);
+			
+		$this->provider = new Provider($this->config['server'], $this->config['providerConfig']);
 	}
 
 	/**
@@ -97,31 +93,6 @@ class Client {
 	}
 
 	/**
-	 * createProvider
-	 *
-	 * @param array $options
-	 * @return Provider;
-	 */
-	public function createProvider(array $options = []){
-		
-		$options = array_merge($this->providerOptions, $options);
-
-		if(!array_key_exists('clientId', $options))
-			throw new Exception('Provide clientId');
-		if(!array_key_exists('redirectUri', $options))
-			throw new Exception('Provide redirectUri');
-
-		$strip = function($str) { return preg_replace('/^\/(.*)\/$/', '$1', $str); };
-
-		$options['redirectUri'] = $strip($options['redirectUri']);
-		$options['urlAuthorize'] = $strip($options['urlAuthorize']);
-		$options['urlAccessToken'] = $strip($options['urlAccessToken']);
-		$options['urlResourceOwnerDetails'] = $strip($options['urlResourceOwnerDetails']);
-			
-		return new Provider($options);
-	}
-
-	/**
 	 * getProvider
 	 *
 	 * @return Provider
@@ -131,14 +102,13 @@ class Client {
 	}
 
 	/**
-	 * setResourceOwner
+	 * setTokenStorage
 	 *
-	 * @param ResourceOwnerInterface $owner
-	 * @return ResourceOwnerInterface
+	 * @param StorageInterface $storage
+	 * @return void
 	 */
-	public function setResourceOwner(ResourceOwnerInterface $owner) {
-		$this->user = new ResourceOwnerInterface($owner->toArray());
-		return $this->user;
+	public function setTokenStorage(StorageInterface $storage) {
+		$this->tokenStorage = $storage;
 	}
 
 	/**
@@ -147,17 +117,23 @@ class Client {
 	 * @param AccessToken $token
 	 * @return ResourceOwnerInterface
 	 */
-	public function getResourceOwner(AccessToken $token = null) {
+	public function getResourceOwner() {
 		try {
 
-			if(!$this->hasValidAccessToken(true))
-				return null;
+			if(!$this->resourceOwner) {
 
-			return $this->provider->getResourceOwner($token ?: $this->getAccessToken());	
+				if(!$this->hasValidAccessToken())
+					return null;
+
+				$this->resourceOwner = $this->provider->getResourceOwner($this->getAccessToken());	
+			}
 			
 		} catch(Exception $e) {
 			$this->clearAccessToken();
+			$this->resourceOwner = null;
 		}
+
+		return $this->resourceOwner;
 	}
 
 	/**
@@ -167,8 +143,8 @@ class Client {
 	 */
 	public function getAccessToken() {
 		
-		if(!$this->accessToken)
-			$this->accessToken = Token::fromCookie();
+		if(!$this->accessToken && $this->tokenStorage) 
+			$this->accessToken = $this->tokenStorage->getToken();
 
 		return $this->accessToken;
 	}
@@ -181,7 +157,9 @@ class Client {
 	 */
 	public function setAccessToken(AccessToken $token) {
 		$this->accessToken = $token;
-		Token::setCookie($token);
+
+		if($this->tokenStorage)
+			$this->tokenStorage->saveToken($token);
 	}
 
 	/**
@@ -191,33 +169,29 @@ class Client {
 	 */
 	public function clearAccessToken() {
 		$this->accessToken = null;
-		Token::clearCookie();
-	}
 
-	/**
-	 * getUser
-	 *
-	 * @return ResourceOwnerInterface
-	 */
-	public function getUser() {
-		return $this->user;
+		if($this->tokenStorage)
+			$this->tokenStorage->deleteToken();
 	}
 
 	/**
 	 * hasValidAccessToken
 	 *
-	 * @param boolean $tryToRefresh
 	 * @return boolean
 	 */
-	public function hasValidAccessToken($tryToRefresh = false) {
+	public function hasValidAccessToken() {
 
 		$token = $this->getAccessToken();
 
 		if(!$token)
 			return false;
 
-		if($tryToRefresh && $token->hasExpired() && $token->getRefreshToken())
-			return $this->refreshAccessToken() ? true : false;
+		if(
+			$this->config['auto_refresh_token'] === true 
+			&& $token->hasExpired() 
+			&& $token->getRefreshToken()
+		)
+			return (boolean) $this->refreshAccessToken() ? true : false;
 		
 		return !$token->hasExpired() && $this->verifyAccessToken();
 	}
@@ -243,13 +217,11 @@ class Client {
 	/**
 	 * refreshAccessToken
 	 *
-	 * @param AccessToken $token
 	 * @return AccessToken|null
 	 */
-	public function refreshAccessToken(AccessToken $token = null) {
+	public function refreshAccessToken() {
 
-		if(!$token)
-			$token = $this->getAccessToken();
+		$token = $this->getAccessToken();
 
 		if(!$token)
 			return null;
@@ -276,6 +248,44 @@ class Client {
 			$this->clearAccessToken();
 			return null;
 		}
+	}
+
+	/**
+	 * doPasswordGrant
+	 *
+	 * @param mixed $username
+	 * @param mixed $password
+	 * @return AccessToken
+	 */
+	public function doPasswordGrant($username, $password) {
+		try {
+			$token = $this->provider->getAccessToken('password', [
+				'username' => $username,
+				'password' => $password
+			]);
+
+			$this->setAccessToken($token);
+		} catch (Exception $e) {
+			throw new IdentityProviderException($e->getMessage());
+		}
+
+		return $this->getAccessToken();
+	}
+
+	/**
+	 * doClientGrant
+	 *
+	 * @return AccessToken
+	 */
+	public function doClientGrant() {
+		try {
+			$token = $this->provider->getAccessToken('client_credentials');
+			$this->setAccessToken($token);
+		} catch (Exception $e) {
+			throw new IdentityProviderException($e->getMessage());
+		}
+
+		return $this->getAccessToken();
 	}
 
 	/**
