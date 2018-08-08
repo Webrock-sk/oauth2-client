@@ -3,6 +3,7 @@ namespace WebrockSk\Oauth2Client;
 
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Provider\GenericResourceOwner;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException as LeagueIdentityProviderException;
 
 use WebrockSk\Oauth2Client\AccessToken\Storage\StorageInterface;
 
@@ -265,8 +266,8 @@ class Client {
 			]);
 
 			$this->setAccessToken($token);
-		} catch (Exception $e) {
-			throw new IdentityProviderException($e->getMessage());
+		} catch (LeagueIdentityProviderException $e) {
+			throw IdentityProviderException::fromLeague($e);
 		}
 
 		return $this->getAccessToken();
@@ -281,8 +282,8 @@ class Client {
 		try {
 			$token = $this->provider->getAccessToken('client_credentials');
 			$this->setAccessToken($token);
-		} catch (Exception $e) {
-			throw new IdentityProviderException($e->getMessage());
+		} catch (LeagueIdentityProviderException $e) {
+			throw IdentityProviderException::fromLeague($e);
 		}
 
 		return $this->getAccessToken();

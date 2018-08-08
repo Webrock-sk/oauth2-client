@@ -103,10 +103,7 @@ class Provider extends AbstractProvider {
 			if(!is_string($error))
 				$error = var_export($error, true);
 
-			$code  = 0;
-
-			if(!is_int($code))
-				$code = intval($code);
+			$code = (int) (!empty($data['code']) ? $data['code'] : 0);
 
 			throw new IdentityProviderException($error, $code, $data);
 		}
