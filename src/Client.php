@@ -1,6 +1,8 @@
 <?php
 namespace WebrockSk\Oauth2Client;
 
+use Lcobucci\JWT\Parser;
+
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Provider\GenericResourceOwner;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException as LeagueIdentityProviderException;
@@ -147,6 +149,9 @@ class Client {
 		if(!$this->accessToken && $this->tokenStorage) 
 			$this->accessToken = $this->tokenStorage->getToken();
 
+		if(!$this->accessToken)
+			$this->accessToken = $this->getAccessTokenFromHeader(); 
+
 		return $this->accessToken;
 	}
 
@@ -161,6 +166,32 @@ class Client {
 
 		if($this->tokenStorage)
 			$this->tokenStorage->saveToken($token);
+	}
+
+	/**
+	 * getAccessTokenFromHeader
+	 *
+	 * @return AccessToken
+	 */
+	public function getAccessTokenFromHeader() {
+
+		$headers = apache_request_headers();
+
+		if(!array_key_exists('Authorization', $headers))
+			return null;
+		
+		if(!preg_match('/^\s*Bearer\s*([A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+(\.[A-Za-z0-9-_.+\=]+)*)$/', $headers['Authorization'], $matches))
+			return null;
+
+		$token = (new Parser())->parse((string) $matches[1]);
+		$claims = (object) $token->getClaims();
+
+		return new AccessToken([
+			'access_token' => $matches[1],
+			'refresh_token' => null,
+			'scope' => $claims->scope->getValue(),
+			'expires' => $claims->exp->getValue(),
+		]);	
 	}
 
 	/**
@@ -200,10 +231,9 @@ class Client {
 	/**
 	 * verifyAccessToken
 	 *
-	 * @param AccessToken AccessToken
 	 * @return boolean
 	 */
-	public function verifyAccessToken(AccessToken $token = null){
+	public function verifyAccessToken(){
 
 		if(!$token)
 			$token = $this->getAccessToken();
@@ -212,6 +242,7 @@ class Client {
 			return false;
 
 		// for now
+		//TODO: add token verification
 		return true;
 	}
 
