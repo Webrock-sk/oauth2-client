@@ -231,9 +231,10 @@ class Client {
 	/**
 	 * verifyAccessToken
 	 *
-	 * @return boolean
+	 * @param AccessToken $token
+	 * @return void
 	 */
-	public function verifyAccessToken(){
+	public function verifyAccessToken(AccessToken $token){
 
 		if(!$token)
 			$token = $this->getAccessToken();
