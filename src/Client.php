@@ -62,15 +62,16 @@ class Client {
 			throw new IdentityProviderException('Provide server');
 
 		$this->config = [
-			'server'                      => $config['server'],
+			'server'                         => $config['server'],
 			'providerConfig' => [
-				'clientId'                => @$config['clientId'],
-				'clientSecret'            => @$config['clientSecret'],
-				'redirectUri'             => @$config['redirectUri'],
-				'proxy'                   => @$config['proxyIp'] ?: null,
-				'verify'                  => false
+				'clientId'                   => @$config['client_id'],
+				'clientSecret'               => @$config['cient_secret'],
+				'redirectUri'                => @$config['redirect_uri'],
+				'proxy'                      => @$config['proxy'] ?: null,
+				'verify'                     => false
 			],
-			'auto_refresh_token'          => isset($config['auto_refresh_token']) ? $config['auto_refresh_token'] : true,
+			'auto_load_token'                => isset($config['auto_load_token']) ? $config['auto_load_token'] : true,
+			'auto_refresh_token'             => isset($config['auto_refresh_token']) ? $config['auto_refresh_token'] : true,
 			// 'token_verify_hs_key'         => @$config['token_verify_hs_key'], //TODO: add verification
 			// 'token_verify_rs_public_key'  => @$config['token_verify_rs_public_key'], //TODO: add verification
 			// 'token_verify_rs_private_key' => @$config['token_verify_rs_private_key'], //TODO: add verification
@@ -78,6 +79,10 @@ class Client {
 
 		if(isset($config['token_storage']))
 			$this->setTokenStorage($config['token_storage']);
+
+		//Pre-set access token
+		if(!!$config['auto_load_token'])
+			$this->getAccessToken();
 			
 		$this->provider = new Provider($this->config['server'], $this->config['providerConfig']);
 	}
@@ -156,10 +161,10 @@ class Client {
 		
 		if(!$this->accessToken) {
 			if($this->tokenStorage) 
-			$this->accessToken = $this->tokenStorage->getToken();
+				$this->accessToken = $this->tokenStorage->getToken();
 
-		if(!$this->accessToken)
-			$this->accessToken = $this->getAccessTokenFromHeader(); 
+			if(!$this->accessToken)
+				$this->accessToken = $this->getAccessTokenFromHeader(); 
 		}
 
 		return $this->accessToken;
@@ -307,8 +312,8 @@ class Client {
 	/**
 	 * doPasswordGrant
 	 *
-	 * @param string $username
-	 * @param string $password
+	 * @param mixed $username
+	 * @param mixed $password
 	 * @return AccessToken
 	 */
 	public function doPasswordGrant($username, $password) {
