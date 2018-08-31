@@ -65,7 +65,7 @@ class Client {
 			'server'                         => $config['server'],
 			'providerConfig' => [
 				'clientId'                   => @$config['client_id'],
-				'clientSecret'               => @$config['cient_secret'],
+				'clientSecret'               => @$config['client_secret'],
 				'redirectUri'                => @$config['redirect_uri'],
 				'proxy'                      => @$config['proxy'] ?: null,
 				'verify'                     => false
@@ -81,7 +81,7 @@ class Client {
 			$this->setTokenStorage($config['token_storage']);
 
 		//Pre-set access token
-		if(!!$config['auto_load_token'])
+		if(!!$this->config['auto_load_token'])
 			$this->getAccessToken();
 			
 		$this->provider = new Provider($this->config['server'], $this->config['providerConfig']);
@@ -307,6 +307,24 @@ class Client {
 			$this->clearAccessToken();
 			return null;
 		}
+	}
+
+	/**
+	 * getAuthorizationUrl
+	 *
+	 * @param mixed array
+	 * @return void
+	 */
+	public function getAuthorizationUrl(array $options = []) {
+
+		$provider = $this->provider;
+
+		if(isset($options['client_id'])) {
+			$config = array_merge($this->config['providerConfig'], ['clientId' => $options['client_id']]);
+			$provider = new Provider($this->config['server'], $config);
+		}
+
+		return $provider->getAuthorizationUrl($options);
 	}
 
 	/**
