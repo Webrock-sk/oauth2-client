@@ -1,6 +1,6 @@
 {
 	"name": "m7/oauth2-client",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"description": "OAuth 2.0 Client Library",
 	"license": "MIT",
 	"type": "library",
