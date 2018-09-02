@@ -15,7 +15,7 @@ class Cookie implements StorageInterface {
 	 * @param mixed $key
 	 * @return void
 	 */
-	public function __construct($cookieKey = 'wrskoauth2token') {
+	public function __construct($cookieKey = 'AccessToken') {
 		if(empty($cookieKey))
 			throw new IdentityProviderException('Token cookie storage needs cookie key');
 		$this->cookieKey = $cookieKey;
@@ -27,6 +27,9 @@ class Cookie implements StorageInterface {
 	 * @return void
 	 */
 	public function getToken() {
+
+		if(!isset($_COOKIE[$this->cookieKey]))
+			return null;
 
 		$rawToken = @$_COOKIE[$this->cookieKey];
 

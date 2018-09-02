@@ -16,35 +16,35 @@ class Client {
 	static $instance;
 
 	/**
-	 * $config
+	 * Config
 	 *
 	 * @var array
 	 */
 	private $config;
 
 	/**
-	 * $provider
+	 * Provider
 	 *
 	 * @var Provider
 	 */
 	private $provider;
 
 	/**
-	 * $accessToken
+	 * Access Token
 	 *
 	 * @var AccessToken
 	 */
 	private $accessToken;
 
 	/**
-	 * $tokenStorage
+	 * Token Storage
 	 *
 	 * @var StorageInterface
 	 */
 	private $tokenStorage;
 
 	/**
-	 * $user
+	 * Resource Owner
 	 *
 	 * @var ResourceOwnerInterface
 	 */
