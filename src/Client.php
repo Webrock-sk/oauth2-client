@@ -274,9 +274,10 @@ class Client {
 	/**
 	 * refreshAccessToken
 	 *
+	 * @param mixed $refreshToken
 	 * @return AccessToken|null
 	 */
-	public function refreshAccessToken() {
+	public function refreshAccessToken($refreshToken = null) {
 
 		$token = $this->getAccessToken();
 
@@ -285,27 +286,27 @@ class Client {
 
 		if(!$token->hasExpired())
 			return $token;
-
+			
 		try {
 
-			$refreshToken = $token->getRefreshToken();
+			$refreshToken = $refreshToken ?: $token->getRefreshToken();
 
 			if(!$refreshToken)
-				return null;
+				throw new IdentityProviderException('No refresh token');
 
 			$this->assertValidTokenRequest();
 
 			$token = $this->provider->getAccessToken('refresh_token', [
 				'refresh_token' => $refreshToken
 			]);
-	
+
 			$this->setAccessToken($token);
 
 			return $token;
 
 		} catch(Exception $e) {
 			$this->clearAccessToken();
-			return null;
+			throw $e;
 		}
 	}
 
