@@ -1,7 +1,7 @@
 <?php
 namespace WebrockSk\Oauth2Client\AccessToken\Storage;
 
-use League\OAuth2\Client\Token\AccessToken;
+use WebrockSk\Oauth2Client\AccessToken;
 
 interface StorageInterface {
 

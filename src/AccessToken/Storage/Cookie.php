@@ -1,8 +1,7 @@
 <?php
 namespace WebrockSk\Oauth2Client\AccessToken\Storage;
 
-use League\OAuth2\Client\Token\AccessToken;
-
+use WebrockSk\Oauth2Client\AccessToken;
 use WebrockSk\Oauth2Client\IdentityProviderException;
 
 class Cookie implements StorageInterface {
@@ -15,7 +14,7 @@ class Cookie implements StorageInterface {
 	 * @param mixed $key
 	 * @return void
 	 */
-	public function __construct($cookieKey = 'AccessToken') {
+	public function __construct($cookieKey = 'wrskoauth2token') {
 		if(empty($cookieKey))
 			throw new IdentityProviderException('Token cookie storage needs cookie key');
 		$this->cookieKey = $cookieKey;
@@ -27,9 +26,6 @@ class Cookie implements StorageInterface {
 	 * @return void
 	 */
 	public function getToken() {
-
-		if(!isset($_COOKIE[$this->cookieKey]))
-			return null;
 
 		$rawToken = @$_COOKIE[$this->cookieKey];
 
@@ -43,9 +39,7 @@ class Cookie implements StorageInterface {
 
 		return new AccessToken([
 			'access_token' => $token['access_token'],
-			'refresh_token' => $token['refresh_token'],
-			'scope' => $token['scope'],
-			'expires' => $token['expires'],
+			'refresh_token' => $token['refresh_token']
 		]);
 	}
 

@@ -2,8 +2,7 @@
 namespace WebrockSk\Oauth2Client;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
-use League\OAuth2\Client\Token\AccessToken;
-use League\OAuth2\Client\Provider\GenericResourceOwner;
+use League\OAuth2\Client\Token\AccessToken as LeagueAccessToken;
 
 use WebrockSk\Oauth2Client\AccessToken\Storage\StorageInterface;
 
@@ -67,10 +66,10 @@ class Provider extends AbstractProvider {
 	/**
 	 * Returns the URL for requesting the resource owner's details.
 	 *
-	 * @param AccessToken $token
+	 * @param LeagueAccessToken $token
 	 * @return string
 	 */
-	public function getResourceOwnerDetailsUrl(AccessToken $token) {
+	public function getResourceOwnerDetailsUrl(LeagueAccessToken $token) {
 		return $this->server.self::URL_RESOURCE_OWNER;
 	}
 
@@ -84,6 +83,30 @@ class Provider extends AbstractProvider {
 	 */
 	protected function getDefaultScopes() {
 		return null;
+	}
+
+	/**
+	 * Requests an access token using a specified grant and option set.
+	 *
+	 * @param  mixed $grant
+	 * @param  array $options
+	 * @return AccessToken
+	 */
+	public function getAccessToken($grant, array $options = []) {
+		$token = parent::getAccessToken($grant, $options);
+		return AccessToken::fromLeague($token);
+	}
+
+	/**
+	 * Generates a resource owner object from a successful resource owner
+	 * details request.
+	 *
+	 * @param array $data
+	 * @param LeagueAccessToken $token
+	 * @return ResourceOwnerInterface
+	 */
+	protected function createResourceOwner(array $data, LeagueAccessToken $token) {
+		return new ResourceOwner($data);
 	}
 	
 	/**
@@ -107,17 +130,5 @@ class Provider extends AbstractProvider {
 
 			throw new IdentityProviderException($error, $code, $data);
 		}
-	}
-
-	/**
-	 * Generates a resource owner object from a successful resource owner
-	 * details request.
-	 *
-	 * @param  array $response
-	 * @param  AccessToken $token
-	 * @return ResourceOwnerInterface
-	 */
-	protected function createResourceOwner(array $response, AccessToken $token) {
-		return new GenericResourceOwner($response, 'id');
 	}
 }

@@ -1,6 +1,5 @@
 {
-	"name": "m7/oauth2-client",
-	"version": "0.4.2",
+	"name": "webrock-sk/oauth2-client",
 	"description": "OAuth 2.0 Client Library",
 	"license": "MIT",
 	"type": "library",
@@ -13,7 +12,8 @@
 	"require": {
 		"php": "^5.6|^7.0",
 		"league/oauth2-client": "^2.3",
-		"lcobucci/jwt": "^3.2"
+		"lcobucci/jwt": "^3.2",
+		"guzzlehttp/guzzle": "^6.3"
 	},
 	"autoload": {
 		"psr-4": {

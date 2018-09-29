@@ -1,7 +1,7 @@
 <?php
 namespace WebrockSk\Oauth2Client\AccessToken\Storage;
 
-use League\OAuth2\Client\Token\AccessToken;
+use WebrockSk\Oauth2Client\AccessToken;
 
 class File implements StorageInterface {
 
@@ -32,13 +32,9 @@ class File implements StorageInterface {
 		if(!$token)
 			return null;
 
-		
-
 		return new AccessToken([
 			'access_token' => $token['access_token'],
 			'refresh_token' => @$token['refresh_token'],
-			'scope' => @$token['scope'],
-			'expires' => $token['expires'],
 		]);
 	}
 
