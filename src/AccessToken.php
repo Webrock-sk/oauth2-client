@@ -234,6 +234,7 @@ class AccessToken extends LeagueAccessToken {
 
 		$instance = new self([
 			'access_token' => $accessToken->accessToken,
+			'refresh_token' => $accessToken->refreshToken,
 		]);
 
 		return $instance;

@@ -1,8 +1,6 @@
 <?php
 namespace WebrockSk\Oauth2Client;
 
-use Lcobucci\JWT\Parser;
-
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException as LeagueIPException;
 
 use WebrockSk\Oauth2Client\AccessToken\Storage\StorageInterface;
