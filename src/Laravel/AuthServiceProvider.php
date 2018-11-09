@@ -15,7 +15,6 @@ class AuthServiceProvider extends ServiceProvider {
 	 * @return void
 	 */
 	public function boot() {
-
 	}
 
 	/**
@@ -26,7 +25,7 @@ class AuthServiceProvider extends ServiceProvider {
 	public function register() {
 
 		//Register OauthClient singleton
-		$this->app->singleton(Client::class, function($app) {
+		$this->app->singleton(Client::class, function ($app) {
 			return new Client([
 				'server'		=> env('OAUTH_CLIENT_SERVER'),
 				'clientId'		=> env('OAUTH_CLIENT_UUID'),

@@ -17,15 +17,15 @@ class ServiceAssertAuthenticated {
 	 * @return mixed
 	 */
 	public function handle($request, Closure $next) {
-		
 		$oauthClient = App::make(Client::class);
 
-		if(!$oauthClient->hasValidAccessToken(true))
+		if (!$oauthClient->hasValidAccessToken(true)) {
 			return response()->json('Forbidden', 403);
+		}
 
 		try {
 			$result = $oauthClient->getResourceOwner();
-		} catch(Exception $e) {
+		} catch (Exception $e) {
 			return response()->json('Forbidden', 403);
 		}
 		

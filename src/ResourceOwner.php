@@ -7,7 +7,6 @@ use DateTime;
 use DateTimeZone;
 
 class ResourceOwner implements ResourceOwnerInterface {
-
 	private $data;
 
 	/**
@@ -17,16 +16,16 @@ class ResourceOwner implements ResourceOwnerInterface {
 	 * @return void
 	 */
 	public function __construct(array $data) {
-
-		foreach($data as $key => $value)
-			switch($key) {
+		foreach ($data as $key => $value) {
+			switch ($key) {
 				case 'user_id': continue;
-				case 'created_at': 
+				case 'created_at':
 					$this->data['created_at'] = new DateTime($value['date'], new DateTimeZone($value['timezone']));
 				break;
-				default: 
+				default:
 					$this->data[$key] = $value;
 			}
+		}
 	}
 
 	/**
@@ -34,7 +33,7 @@ class ResourceOwner implements ResourceOwnerInterface {
 	 *
 	 * @return mixed
 	 */
-	public function getId()	{
+	public function getId() {
 		return $this->data['id'];
 	}
 

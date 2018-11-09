@@ -2,27 +2,27 @@
 namespace WebrockSk\Oauth2Client;
 
 use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\ClientException;
 
 use WebrockSk\Oauth2Client\Client as Oauth2Client;
 
 use Exception;
 
-class Connector {
+class Connector extends HttpService {
 
 	/**
 	 * $oauth2Client
 	 *
 	 * @var Oauth2Client
 	 */
-	private $oauth2client;
+	protected $oauth2client;
+
 
 	/**
-	 * $httpClient
+	 * $config
 	 *
-	 * @var GuzzleClient
+	 * @var array
 	 */
-	private $httpClient;
+	protected $config;
 
 	/**
 	 * __construct
@@ -31,162 +31,79 @@ class Connector {
 	 * @return void
 	 */
 	public function __construct(Oauth2Client $oauth2client, $config = []) {
-
 		$this->oauth2client = $oauth2client;
+		$this->config = $config;
+	}
 
-		$token = $oauth2client->getAccessToken();
+	/**
+	 * getHttpClient
+	 *
+	 * @return GuzzleClient
+	 */
+	public function getHttpClient() {
+		$token = $this->oauth2client->getAccessToken();
 
-		$config = array_merge([
-			'base_uri' => trim($oauth2client->getServer(), '/').'/api/',
+		return new GuzzleClient([
+			'base_uri' => trim($this->oauth2client->getServer(), '/').'/api/',
 			'timeout'  => 30,
 			'headers' => [
+				'Agent' => $_SERVER['HTTP_USER_AGENT'],
 				'Content-Type' => 'application/json',
 				'Authorization' => $token ? 'Bearer '.$token->getToken() : '',
 			],
-			'proxy' => isset($config['proxy']) ? $config['proxy'] : null
-		], $config);
-
-		$this->httpClient = new GuzzleClient($config);
-	}
-
-	/**
-	 * get
-	 *
-	 * @param mixed $url
-	 * @param array array
-	 * @return mixed
-	 */
-	private function get($url, array $query = []) {
-
-		$response = $this->httpClient->request('GET', $url, [
-			'query' => $query
+			'proxy' => isset($this->config['proxy']) ? $this->config['proxy'] : null,
 		]);
-
-		return $this->parseResponse((string) $response->getBody());
 	}
 
 	/**
-	 * post
+	 * usersWhoAmI
 	 *
-	 * @param mixed $url
-	 * @param array array
-	 * @return mixed
-	 */
-	private function post($url, array $params = []) {
-
-		$response = $this->httpClient->request('POST', $url, [
-			'json' => $params
-		]);
-
-		return $this->parseResponse((string) $response->getBody());
-	}
-
-	/**
-	 * put
-	 *
-	 * @param mixed $url
-	 * @param array array
-	 * @return mixed
-	 */
-	public function put($url, array $params = []) {
-
-		$response = $this->httpClient->request('PUT', $url, [
-			'json' => $params
-		]);
-
-		return $this->parseResponse((string) $response->getBody());
-	}
-
-	/**
-	 * delete
-	 *
-	 * @param mixed $url
-	 * @param array array
-	 * @return mixed
-	 */
-	private function delete($url, array $params = []) {
-
-		$response = $this->httpClient->request('DELETE', $url, [
-			'json' => $params
-		]);
-
-		return $this->parseResponse((string) $response->getBody());
-	}
-
-	/**
-	 * parseResponse
-	 *
-	 * @param string $jsonContent
 	 * @return void
 	 */
-	private function parseResponse($jsonContent) {
-
-		$content = json_decode($jsonContent, JSON_FORCE_OBJECT);
-
-		if(json_last_error() !== JSON_ERROR_NONE)
-			return $jsonContent;
-
-		return $content;
+	public function usersWhoAmI() {
+		return $this->get('users/whoAmI');
 	}
 
 	/**
-	 * getResponseFromE
+	 * usersLoad
 	 *
-	 * @param mixed $e
+	 * @param mixed $uuid
+	 * @param mixed $query
 	 * @return void
 	 */
-	public function getResponseFromE($e) {
-
-		if(method_exists($e, 'getResponse'))
-			$jsonContent = $e->getResponse()->getBody()->getContents();
-		else
-			return $e->getMessage();
-
-		$content = json_decode($jsonContent, true);
-
-		if(json_last_error() !== JSON_ERROR_NONE)
-			return $jsonContent;
-
-		return $content;
+	public function usersLoad($uuid = null, $query = []) {
+		return $this->get('users'.($uuid ? "/$uuid" : ''), $query);
 	}
 
 	/**
-	 * whoIs
-	 *
-	 * @param string $uuid
-	 * @return void
-	 */
-	public function loadUser($uuid) {
-		return $this->get("user/{$uuid}");
-	}
-
-	/**
-	 * updateUser
+	 * usersCreate
 	 *
 	 * @param mixed $params
+	 * @return void
 	 */
-	public function createUser($params = []) {
-		return $this->post('user', $params);
+	public function usersCreate($params = []) {
+		return $this->post('users', $params);
 	}
 
 	/**
-	 * updateUser
+	 * usersSave
 	 *
 	 * @param mixed $uuid
 	 * @param mixed $params
 	 * @return void
 	 */
-	public function updateUser($uuid, $params = []) {
-		return $this->put("user/{$uuid}", $params);
+	public function usersSave($uuid = null, $params = []) {
+		return $this->put('users'.($uuid ? "/$uuid" : ''), $params);
 	}
 
 	/**
-	 * updateUser
+	 * usersDelete
 	 *
-	 * @param mixed $params
+	 * @param mixed $uuid
+	 * @return void
 	 */
-	public function removeUser($uuid) {
-		return $this->delete("user/{$uuid}");
+	public function usersDelete($uuid) {
+		return $this->delete("users/{$uuid}");
 	}
 
 	/**
@@ -197,33 +114,33 @@ class Connector {
 	 */
 	public function passwordRecoveryRequest($email) {
 		return $this->post('user/password-recovery/request', [
-			'email' => $email
+			'email' => $email,
 		]);
 	}
 
 	/**
-	 * verifyToken
+	 * passwordRecoveryVerifyToken
 	 *
 	 * @param string $token
 	 * @return void
 	 */
-	public function verifyPasswordRecoveryToken($token) {
+	public function passwordRecoveryVerifyToken($token) {
 		return $this->post('user/password-recovery/validate-token', [
-			'token' => $token
+			'token' => $token,
 		]);
 	}
 
 	/**
-	 * changePassword
+	 * passwordRecoveryChangePassword
 	 *
-	 * @param mixed $token
 	 * @param mixed $password
+	 * @param mixed $token
 	 * @return void
 	 */
-	public function changePassword($token, $password) {
+	public function passwordRecoveryChangePassword($password, $token) {
 		return $this->post('user/password-recovery/change-password', [
+			'password' => $password,
 			'token' => $token,
-			'password' => $password
 		]);
 	}
 }

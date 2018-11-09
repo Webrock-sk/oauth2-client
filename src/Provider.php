@@ -21,6 +21,9 @@ class Provider extends AbstractProvider {
 	const URL_ACCESS_TOKEN = '/api/oauth/token';
 	const URL_RESOURCE_OWNER = '/api/oauth/resource';
 
+	const URL_LOGIN = 'login';
+	const URL_LOGOUT = 'logout';
+
 	/**
 	 * @param array $options
 	 * @param array $collaborators
@@ -73,14 +76,35 @@ class Provider extends AbstractProvider {
 		return $this->server.self::URL_RESOURCE_OWNER;
 	}
 
-	 /**
-	 * Returns the default scopes used by this provider.
+	/**
+	 * Returns the URL for login
 	 *
-	 * This should only be the scopes that are required to request the details
-	 * of the resource owner, rather than all the available scopes.
-	 *
-	 * @return array
+	 * @return string
 	 */
+	public function getLoginPageUrl() {
+		return trim($this->server, '/').'/'.self::URL_LOGIN.'?'.http_build_query([
+			'client_id' => $this->clientId,
+			'redirect_uri' => $this->redirectUri,
+		]);
+	}
+
+	/**
+	 * Returns the URL for logout
+	 *
+	 * @return string
+	 */
+	public function getLogoutPageUrl() {
+		return trim($this->server, '/').'/'.self::URL_LOGOUT;
+	}
+
+	/**
+	* Returns the default scopes used by this provider.
+	*
+	* This should only be the scopes that are required to request the details
+	* of the resource owner, rather than all the available scopes.
+	*
+	* @return array
+	*/
 	protected function getDefaultScopes() {
 		return null;
 	}
@@ -118,13 +142,12 @@ class Provider extends AbstractProvider {
 	 * @return void
 	 */
 	protected function checkResponse(ResponseInterface $response, $data) {
-
-		if(!empty($data['error'])) {
-
+		if (!empty($data['error'])) {
 			$error = $data['error'];
 
-			if(!is_string($error))
+			if (!is_string($error)) {
 				$error = var_export($error, true);
+			}
 
 			$code = (int) (!empty($data['code']) ? $data['code'] : 0);
 

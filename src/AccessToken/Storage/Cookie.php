@@ -6,6 +6,11 @@ use WebrockSk\Oauth2Client\IdentityProviderException;
 
 class Cookie implements StorageInterface {
 
+	/**
+	 * $cookieKey
+	 *
+	 * @var string
+	 */
 	private $cookieKey;
 
 	/**
@@ -14,9 +19,10 @@ class Cookie implements StorageInterface {
 	 * @param mixed $key
 	 * @return void
 	 */
-	public function __construct($cookieKey = 'wrskoauth2token') {
-		if(empty($cookieKey))
+	public function __construct($cookieKey = 'AccessToken') {
+		if (empty($cookieKey)) {
 			throw new IdentityProviderException('Token cookie storage needs cookie key');
+		}
 		$this->cookieKey = $cookieKey;
 	}
 
@@ -26,20 +32,19 @@ class Cookie implements StorageInterface {
 	 * @return void
 	 */
 	public function getToken() {
-
-		$rawToken = @$_COOKIE[$this->cookieKey];
-
-		if(!$rawToken)
+		if (!isset($_COOKIE[$this->cookieKey])) {
 			return null;
+		}
 
-		$token = json_decode($rawToken, true);
+		$token = json_decode($_COOKIE[$this->cookieKey], true);
 
-		if(!$token)
+		if (!$token) {
 			return null;
+		}
 
 		return new AccessToken([
 			'access_token' => $token['access_token'],
-			'refresh_token' => $token['refresh_token']
+			'refresh_token' => @$token['refresh_token'],
 		]);
 	}
 

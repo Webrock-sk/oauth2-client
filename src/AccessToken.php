@@ -12,14 +12,13 @@ use Lcobucci\JWT\Signer\Key;
 use WebrockSk\Oauth2Client\IdentityProviderException;
 
 class AccessToken extends LeagueAccessToken {
-
-	static $tokenAlgs = [
+	public static $tokenAlgs = [
 		'HS256' => Signer\Hmac\Sha256::class,
 		'HS384' => Signer\Hmac\Sha384::class,
 		'HS512' => Signer\Hmac\Sha512::class,
 		'RS256' => Signer\Rsa\Sha256::class,
 		'RS384' => Signer\Rsa\Sha384::class,
-		'RS512' => Signer\Rsa\Sha512::class
+		'RS512' => Signer\Rsa\Sha512::class,
 	];
 
 	/**
@@ -27,50 +26,53 @@ class AccessToken extends LeagueAccessToken {
 	 *
 	 * @var string
 	 */
-	private $jwt;
+	protected $jwt;
 
 	/**
 	 * $headers
 	 *
 	 * @var array
 	 */
-	private $headers;
+	protected $headers;
 
 	/**
 	 * $claims
 	 *
 	 * @var array
 	 */
-	private $claims;
+	protected $claims;
 
 	/**
 	 * $refresh_token
 	 *
 	 * @var string
 	 */
-	private $refresh_token;
+	protected $refresh_token;
 
 	public function __construct(array $options = []) {
-
 		$parser = new Parser;
 		$parsedToken = $parser->parse((string) $options['access_token']);
 
-		if(!$parsedToken)
+		if (!$parsedToken) {
 			throw new IdentityProviderException('token_cannot_parse');
+		}
 
 		$this->headers = $parsedToken->getHeaders();
 
-		if(!array_key_exists($this->headers['alg'], self::$tokenAlgs)) {
+		if (!array_key_exists($this->headers['alg'], self::$tokenAlgs)) {
 			$supported = implode(' ', array_keys(self::$tokenAlgs));
 			throw new IdentityProviderException("Token algorithm {$this->headers['alg']} not supported. Supported algs: ".$supported);
 		}
 
-		$this->claims = array_map(function($item){
-			return $item->getValue();
-		}, $parsedToken->getClaims());
+		foreach ($parsedToken->getClaims() as $key => $item) {
+			$this->claims[$key] = $item->getValue();
+		}
 
 		$this->jwt = $options['access_token'];
-		$this->refresh_token = @$options['refresh_token'];
+
+		if (isset($options['refresh_token'])) {
+			$this->refresh_token = $options['refresh_token'];
+		}
 
 		unset($this->accessToken);
 		unset($this->expires);
@@ -158,7 +160,6 @@ class AccessToken extends LeagueAccessToken {
 	 * @throws RuntimeException if 'expires' is not set on the token.
 	 */
 	public function hasExpired() {
-
 		$expires = $this->getExpires();
 
 		if (empty($expires)) {
@@ -176,7 +177,6 @@ class AccessToken extends LeagueAccessToken {
 	 * @return void
 	 */
 	public function validate($public_key, $passphrase = null) {
-
 		$data = new ValidationData();
 
 		$data->setId($this->claims['id']);
@@ -187,13 +187,15 @@ class AccessToken extends LeagueAccessToken {
 		$parser = new Parser;
 		$parsedToken = $parser->parse($this->jwt);
 
-		if(!$parsedToken->validate($data))
+		if (!$parsedToken->validate($data)) {
 			throw new IdentityProviderException('token_data_invalid');
+		}
 
 		$signer = new self::$tokenAlgs[$this->headers['alg']];
 
-		if(!$parsedToken->verify($signer, new Key($public_key, $passphrase)))
+		if (!$parsedToken->verify($signer, new Key($public_key, $passphrase))) {
 			throw new IdentityProviderException('token_signature_invalid');
+		}
 
 		return true;
 	}
@@ -218,7 +220,8 @@ class AccessToken extends LeagueAccessToken {
 			'access_token' 		=> $this->getToken(),
 			'refresh_token' 	=> $this->getRefreshToken(),
 			'expires' 			=> $this->getExpires(),
-			'resource_owner_id' => $this->getResourceOwnerId()
+			'resource_owner_id' => $this->getResourceOwnerId(),
+			'scope' 			=> $this->getScope(),
 		];
 	}
 
@@ -229,7 +232,6 @@ class AccessToken extends LeagueAccessToken {
 	 * @return void
 	 */
 	public static function fromLeague(LeagueAccessToken $accessToken) {
-
 		$values = $accessToken->getValues();
 
 		$instance = new self([

@@ -9,43 +9,42 @@ use WebrockSk\Oauth2Client\AccessToken\Storage\RequestHeader as RequestHeaderSto
 use Exception;
 
 class Client {
-
-	static $instance;
+	public static $instance;
 
 	/**
 	 * $config
 	 *
 	 * @var array
 	 */
-	private $config;
+	protected $config;
 
 	/**
 	 * $provider
 	 *
 	 * @var Provider
 	 */
-	private $provider;
+	protected $provider;
 
 	/**
 	 * $accessToken
 	 *
 	 * @var AccessToken
 	 */
-	private $accessToken;
+	protected $accessToken;
 
 	/**
 	 * $tokenStorage
 	 *
 	 * @var StorageInterface
 	 */
-	private $tokenStorage;
+	protected $tokenStorage;
 
 	/**
 	 * $user
 	 *
 	 * @var ResourceOwnerInterface
 	 */
-	private $resourceOwner;
+	protected $resourceOwner;
 
 	/**
 	 * __construct
@@ -54,9 +53,9 @@ class Client {
 	 * @return void
 	 */
 	public function __construct($config = []) {
-
-		if(!isset($config['server']))
+		if (!isset($config['server'])) {
 			throw new IdentityProviderException('Provide server');
+		}
 
 		$this->config = [
 			'server'                         => $config['server'],
@@ -65,21 +64,21 @@ class Client {
 				'clientSecret'               => @$config['client_secret'],
 				'redirectUri'                => @$config['redirect_uri'],
 				'proxy'                      => @$config['proxy'] ?: null,
-				'verify'                     => false
+				'verify'                     => false,
 			],
 			'auto_load_token'                => isset($config['auto_load_token']) ? (bool) $config['auto_load_token'] : true,
 			'auto_refresh_token'             => isset($config['auto_refresh_token']) ? (bool) $config['auto_refresh_token'] : true,
 			'token_verify_public_key'        => @$config['token_verify_public_key'] ?: null,
 		];
 
-		if(isset($config['token_storage']))
+		if (isset($config['token_storage'])) {
 			$this->setTokenStorage($config['token_storage']);
-		else
-			$this->setTokenStorage(new RequestHeaderStorage);
+		}
 
 		//Pre-set access token
-		if($this->config['auto_load_token'])
+		if ($this->config['auto_load_token']) {
 			$this->getAccessToken();
+		}
 			
 		$this->provider = new Provider($this->config['server'], $this->config['providerConfig']);
 	}
@@ -90,9 +89,9 @@ class Client {
 	 * @return Client
 	 */
 	public static function getInstance($config = []) {
-
-		if(!self::$instance)
+		if (!self::$instance) {
 			self::$instance = new self($config);
+		}
 
 		return self::$instance;
 	}
@@ -141,15 +140,14 @@ class Client {
 	 * @return ResourceOwnerInterface|null
 	 */
 	public function getResourceOwner() {
-
-		if(!$this->hasValidAccessToken())
+		if (!$this->hasValidAccessToken()) {
 			throw new IdentityProviderException('invalid_token');
+		}
 
 		try {
-
-			if(!$this->resourceOwner)
+			if (!$this->resourceOwner) {
 				$this->resourceOwner = $this->provider->getResourceOwner($this->getAccessToken());
-			
+			}
 		} catch (LeagueIPException $e) {
 			$this->clearAccessToken();
 			$this->resourceOwner = null;
@@ -165,13 +163,15 @@ class Client {
 	 * @return AccessToken
 	 */
 	public function getAccessToken() {
-		
-		if($this->tokenStorage)
-			$this->accessToken = $this->tokenStorage->getToken();
+		if (!$this->accessToken) {
+			if ($this->tokenStorage) {
+				$this->accessToken = $this->tokenStorage->getToken();
+			}
 
-		if(!$this->accessToken) {
-			$headerStorage = new RequestHeaderStorage;
-			$this->accessToken = $headerStorage->getToken();
+			if (!$this->accessToken) {
+				$headerStorage = new RequestHeaderStorage;
+				$this->accessToken = $headerStorage->getToken();
+			}
 		}
 
 		return $this->accessToken;
@@ -186,11 +186,11 @@ class Client {
 	 * @return void
 	 */
 	public function setAccessToken(AccessToken $token) {
-
 		$this->accessToken = $token;
 
-		if($this->tokenStorage)
+		if ($this->tokenStorage) {
 			$this->tokenStorage->saveToken($token);
+		}
 	}
 
 	/**
@@ -199,11 +199,11 @@ class Client {
 	 * @return void
 	 */
 	public function clearAccessToken() {
-
 		$this->accessToken = null;
 
-		if($this->tokenStorage)
+		if ($this->tokenStorage) {
 			$this->tokenStorage->deleteToken();
+		}
 	}
 
 	/**
@@ -221,18 +221,19 @@ class Client {
 	 * @return boolean
 	 */
 	public function hasValidAccessToken() {
-
 		$token = $this->getAccessToken();
 
-		if(!$token)
+		if (!$token) {
 			return false;
+		}
 
-		if(
-			$this->config['auto_refresh_token'] === true 
-			&& $token->hasExpired() 
+		if (
+			$this->config['auto_refresh_token'] === true
+			&& $token->hasExpired()
 			&& !empty($token->getRefreshToken())
-		)
-			$token = $this->refreshAccessToken();
+		) {
+			$this->refreshAccessToken();
+		}
 		
 		return $this->validateAccessToken();
 	}
@@ -243,16 +244,18 @@ class Client {
 	 * @param AccessToken $token
 	 * @return void
 	 */
-	public function validateAccessToken(AccessToken $token = null){
-
-		if(!$token)
+	public function validateAccessToken(AccessToken $token = null) {
+		if (!$token) {
 			$token = $this->getAccessToken();
+		}
 
-		if(!$token || $token->hasExpired())
+		if (!$token || $token->hasExpired()) {
 			return false;
+		}
 
-		if(!empty($this->config['token_verify_public_key']))
+		if (!empty($this->config['token_verify_public_key'])) {
 			return $token->validate($this->config['token_verify_public_key']);
+		}
 		
 		return true;
 	}
@@ -264,8 +267,9 @@ class Client {
 	 * @return void
 	 */
 	public function assertValidAccessToken(AccessToken $token = null) {
-		if(!$this->verifyAccessToken($token))
+		if (!$this->verifyAccessToken($token)) {
 			throw new IdentityProviderException('invalid_token');
+		}
 	}
 
 	/**
@@ -274,9 +278,9 @@ class Client {
 	 * @return void
 	 */
 	public function checkScope(...$scope) {
-
-		if(!$this->hasValidAccessToken())
+		if (!$this->hasValidAccessToken()) {
 			return false;
+		}
 		
 		$token = $this->getAccessToken();
 
@@ -290,33 +294,33 @@ class Client {
 	 * @return AccessToken|null
 	 */
 	public function refreshAccessToken($refreshToken = null) {
-
 		$token = $this->getAccessToken();
 
-		if(!$token)
+		if (!$token) {
 			return null;
+		}
 
-		if(!$token->hasExpired())
+		if (!$token->hasExpired()) {
 			return $token;
+		}
 			
 		try {
-
 			$refreshToken = $refreshToken ?: $token->getRefreshToken();
 
-			if(!$refreshToken)
+			if (!$refreshToken) {
 				throw new IdentityProviderException('no_refresh_token');
+			}
 
 			$this->assertValidTokenRequest();
 
 			$token = $this->provider->getAccessToken('refresh_token', [
-				'refresh_token' => $refreshToken
+				'refresh_token' => $refreshToken,
 			]);
 
 			$this->setAccessToken($token);
 
 			return $token;
-
-		} catch(Exception $e) {
+		} catch (Exception $e) {
 			$this->clearAccessToken();
 			throw $e;
 		}
@@ -329,10 +333,9 @@ class Client {
 	 * @return void
 	 */
 	public function getAuthorizationUrl(array $options = []) {
-
 		$provider = $this->provider;
 
-		if(isset($options['client_id'])) {
+		if (isset($options['client_id'])) {
 			$config = array_merge($this->config['providerConfig'], ['clientId' => $options['client_id']]);
 			$provider = new Provider($this->config['server'], $config);
 		}
@@ -348,14 +351,12 @@ class Client {
 	 * @return AccessToken
 	 */
 	public function doPasswordGrant($username, $password) {
-
 		$this->assertValidTokenRequest();
 			
 		try {
-
 			$token = $this->provider->getAccessToken('password', [
 				'username' => $username,
-				'password' => $password
+				'password' => $password,
 			]);
 
 			$this->setAccessToken($token);
@@ -372,11 +373,9 @@ class Client {
 	 * @return AccessToken
 	 */
 	public function doClientGrant() {
-
 		$this->assertValidTokenRequest();
 
 		try {
-			
 			$token = $this->provider->getAccessToken('client_credentials');
 
 			$this->setAccessToken($token);
@@ -388,18 +387,51 @@ class Client {
 	}
 
 	/**
+	 * doAuthorizeGrant
+	 *
+	 * @param mixed $code
+	 * @return AccessToken
+	 */
+	public function doAuthorizeGrant($code) {
+		$this->assertValidTokenRequest();
+
+		try {
+			$token = $this->provider->getAccessToken('authorization_code', [
+				'code' => $code,
+			]);
+
+			$this->setAccessToken($token);
+		} catch (LeagueIPException $e) {
+			throw IdentityProviderException::fromLeague($e);
+		}
+
+		return $this->getAccessToken();
+	}
+
+	/**
+	 * doImplicitGrant
+	 *
+	 * @param mixed $code
+	 * @return AccessToken
+	 * TODO: implement
+	 */
+	public function doImplicitGrant() {
+	}
+
+	/**
 	 * assertValidTokenRequest
 	 *
 	 * @return void
 	 * @throws IdentityProviderException
 	 */
 	private function assertValidTokenRequest() {
-
-		if(!isset($this->config['providerConfig']['clientId']))
+		if (!isset($this->config['providerConfig']['clientId'])) {
 			throw new IdentityProviderException('Provide clientId');
+		}
 
-		if(!isset($this->config['providerConfig']['clientSecret']))
+		if (!isset($this->config['providerConfig']['clientSecret'])) {
 			throw new IdentityProviderException('Provide clientSecret');
+		}
 	}
 
 	/**
@@ -410,5 +442,4 @@ class Client {
 	public static function isLoggedIn() {
 		return self::getInstance()->hasValidAccessToken();
 	}
-
 }

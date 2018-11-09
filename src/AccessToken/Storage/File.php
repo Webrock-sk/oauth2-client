@@ -4,7 +4,6 @@ namespace WebrockSk\Oauth2Client\AccessToken\Storage;
 use WebrockSk\Oauth2Client\AccessToken;
 
 class File implements StorageInterface {
-
 	private $path;
 
 	/**
@@ -23,14 +22,15 @@ class File implements StorageInterface {
 	 * @return void
 	 */
 	public function getToken() {
-
-		if(!file_exists($this->path))
+		if (!file_exists($this->path)) {
 			return null;
+		}
 
 		$token = json_decode(file_get_contents($this->path), true);
 
-		if(!$token)
+		if (!$token) {
 			return null;
+		}
 
 		return new AccessToken([
 			'access_token' => $token['access_token'],
@@ -55,7 +55,8 @@ class File implements StorageInterface {
 	 * @return void
 	 */
 	public function deleteToken() {
-		if(file_exists($this->path))
+		if (file_exists($this->path)) {
 			unlink($this->path);
+		}
 	}
 }
