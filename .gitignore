@@ -1,3 +1,5 @@
-vendor
-index.php
 devServer.bat
+index.php
+oauth.token.json
+public_key
+vendor

@@ -57,6 +57,7 @@ class Cookie implements StorageInterface {
 	public function saveToken(AccessToken $accessToken, $expire = 604800, $path = '/', $domain = '', $secure = false, $httpOnly = true) {
 		$serialized = json_encode($accessToken->jsonSerialize());
 		setcookie($this->cookieKey, $serialized, time()+$expire, $path, $domain, $secure, $httpOnly);
+		$_COOKIE[$this->cookieKey] = $serialized;
 	}
 
 	/**

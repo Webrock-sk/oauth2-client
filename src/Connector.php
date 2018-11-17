@@ -107,6 +107,15 @@ class Connector extends HttpService {
 	}
 
 	/**
+	 * logout
+	 *
+	 * @return void
+	 */
+	public function usersLogout() {
+		return $this->get('users/logout');
+	}
+
+	/**
 	 * passwordRecoveryRequest
 	 *
 	 * @param string $password
